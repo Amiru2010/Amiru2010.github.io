@@ -2,139 +2,167 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Digital Clock</title>
-  <link rel="icon" href="https://img.icons8.com/ios_filled/512/228BE6/clock.png" type="image/x-icon">
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap" rel="stylesheet">
+  <title>Calculator</title>
+  <link rel="icon" href="https://www.freeiconspng.com/uploads/calculator-icon-0.png" type="image/x-icon">
   <style>
     :root {
-      --bg-color-light: #f0f0f0;
-      --text-color-light: #333;
-      --bg-color-dark: #121212;
-      --text-color-dark: #f0f0f0;
-      --accent-color: #00adb5;
+      --bg-color: #f0f0f0;
+      --text-color: #000;
+      --button-color: #e0e0e0;
+      --button-hover: #d0d0d0;
+      --accent: #4caf50;
+    }
+
+    [data-theme="dark"] {
+      --bg-color: #121212;
+      --text-color: #fff;
+      --button-color: #333;
+      --button-hover: #444;
+      --accent: #81c784;
     }
 
     body {
       margin: 0;
-      font-family: 'Orbitron', sans-serif;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
       height: 100vh;
-      background-color: var(--bg-color-light);
-      color: var(--text-color-light);
-      transition: background-color 0.5s, color 0.5s;
     }
 
-    body.dark {
-      background-color: var(--bg-color-dark);
-      color: var(--text-color-dark);
-    }
-
-    .clock {
-      font-size: 5rem;
-      margin-bottom: 1rem;
-      transition: all 0.3s ease;
-    }
-
-    .date {
-      font-size: 1.5rem;
-      margin-bottom: 2rem;
-      opacity: 0.8;
-    }
-
-    .controls {
+    .calculator {
+      width: 300px;
+      background: var(--bg-color);
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+      border-radius: 10px;
+      padding: 20px;
+      box-sizing: border-box;
       display: flex;
-      gap: 1rem;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .display {
+      height: 60px;
+      background: var(--button-color);
+      border-radius: 5px;
+      font-size: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 0 10px;
+      overflow-x: auto;
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
     }
 
     button {
-      padding: 0.5rem 1rem;
+      padding: 20px;
+      font-size: 18px;
       border: none;
-      border-radius: 6px;
+      border-radius: 5px;
+      background: var(--button-color);
+      color: var(--text-color);
       cursor: pointer;
-      background-color: var(--accent-color);
-      color: #fff;
-      font-size: 1rem;
-      transition: background-color 0.3s;
+      transition: background 0.3s;
     }
 
     button:hover {
-      background-color: #007b80;
+      background: var(--button-hover);
     }
 
-    @media (max-width: 600px) {
-      .clock {
-        font-size: 3rem;
+    .equals {
+      background: var(--accent);
+      color: white;
+    }
+
+    .theme-toggle {
+      margin-top: 10px;
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 5px;
+      background: var(--button-color);
+      text-align: center;
+    }
+
+    @media (max-width: 400px) {
+      .calculator {
+        width: 90%;
       }
 
-      .date {
-        font-size: 1.2rem;
-      }
-
-      button {
-        font-size: 0.9rem;
-        padding: 0.4rem 0.8rem;
+      .display {
+        font-size: 20px;
       }
     }
   </style>
 </head>
-<body>
-  <div class="clock" id="time">--:--:--</div>
-  <div class="date" id="date">Loading date...</div>
-  <div class="controls">
-    <button id="toggleFormat">Switch to 24-hour</button>
-    <button id="toggleTheme">Toggle Theme</button>
+<body data-theme="light">
+  <div class="calculator">
+    <div class="display" id="display">0</div>
+    <div class="buttons">
+      <button onclick="clearDisplay()">C</button>
+      <button onclick="appendValue('/')">÷</button>
+      <button onclick="appendValue('*')">×</button>
+      <button onclick="appendValue('-')">−</button>
+
+      <button onclick="appendValue('7')">7</button>
+      <button onclick="appendValue('8')">8</button>
+      <button onclick="appendValue('9')">9</button>
+      <button onclick="appendValue('+')">+</button>
+
+      <button onclick="appendValue('4')">4</button>
+      <button onclick="appendValue('5')">5</button>
+      <button onclick="appendValue('6')">6</button>
+      <button onclick="calculate()" class="equals" rowspan="2">=</button>
+
+      <button onclick="appendValue('1')">1</button>
+      <button onclick="appendValue('2')">2</button>
+      <button onclick="appendValue('3')">3</button>
+      <button onclick="appendValue('0')" style="grid-column: span 2;">0</button>
+      <button onclick="appendValue('.')">.</button>
+    </div>
+    <div class="theme-toggle" onclick="toggleTheme()">🌓 Toggle Theme</div>
   </div>
 
   <script>
-    const timeEl = document.getElementById('time');
-    const dateEl = document.getElementById('date');
-    const formatBtn = document.getElementById('toggleFormat');
-    const themeBtn = document.getElementById('toggleTheme');
+    const display = document.getElementById('display');
+    let currentInput = '';
 
-    let is24Hour = false;
-
-    function updateClock() {
-      const now = new Date();
-
-      let hours = now.getHours();
-      let minutes = now.getMinutes();
-      let seconds = now.getSeconds();
-      let ampm = '';
-
-      if (!is24Hour) {
-        ampm = hours >= 12 ? ' PM' : ' AM';
-        hours = hours % 12 || 12;
+    function appendValue(value) {
+      if (display.textContent === '0' && value !== '.') {
+        currentInput = '';
       }
-
-      const timeString = [
-        hours.toString().padStart(2, '0'),
-        minutes.toString().padStart(2, '0'),
-        seconds.toString().padStart(2, '0')
-      ].join(':') + (is24Hour ? '' : ampm);
-
-      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-      const dateString = now.toLocaleDateString(undefined, options);
-
-      timeEl.textContent = timeString;
-      dateEl.textContent = dateString;
+      currentInput += value;
+      display.textContent = currentInput;
     }
 
-    formatBtn.addEventListener('click', () => {
-      is24Hour = !is24Hour;
-      formatBtn.textContent = is24Hour ? 'Switch to 12-hour' : 'Switch to 24-hour';
-      updateClock();
-    });
+    function clearDisplay() {
+      currentInput = '';
+      display.textContent = '0';
+    }
 
-    themeBtn.addEventListener('click', () => {
-      document.body.classList.toggle('dark');
-    });
+    function calculate() {
+      try {
+        const result = eval(currentInput);
+        display.textContent = result;
+        currentInput = result.toString();
+      } catch (e) {
+        display.textContent = 'Error';
+        currentInput = '';
+      }
+    }
 
-    
-    updateClock();
-    setInterval(updateClock, 1000);
+    function toggleTheme() {
+      const body = document.body;
+      const theme = body.getAttribute('data-theme');
+      body.setAttribute('data-theme', theme === 'dark' ? 'light' : 'dark');
+    }
   </script>
 </body>
 </html>
